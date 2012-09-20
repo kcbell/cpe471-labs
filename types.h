@@ -15,4 +15,10 @@ typedef struct vertex_struct {
    int z;
 } vertex_t;
 
+typedef struct bary_struct {
+   double alpha;
+   double beta;
+   double gamma;
+} bary_t;
+
 #endif
