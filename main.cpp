@@ -61,6 +61,28 @@ int main(void)
    // true to scale to max color, false to clamp to 1.0
 }
 
+void rasterizeTriangle(const Image &img, triangle_t tri)
+{
+   // Calculate bounding box
+
+   // For each pixel in bounding box
+   for (int y = min_y; y <= max_y; y++)
+      for (int x = min_x; x <= max_x; x++)
+      {
+         // Calculate barycentric coordinates
+         bary_t bary = computeBary(x, y, tri);
+         // If coords are in bounds
+         if (bary.alpha >= 0 && bary.alpha <= 1 &&
+             bary.beta  >= 0 && bary.beta  <= 1 &&
+             bary.gamma >= 0 && bary.gamma <= 1)
+         {
+            // Color the pixel
+            color_t color = computeColor(tri, bary);
+            img.pixel(x, y, color);
+         }
+      }
+}
+
 bary_t computeBary(int x, int y, triangle_t triangle) {
    // TODO
 }
