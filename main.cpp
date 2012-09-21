@@ -61,4 +61,16 @@ int main(void)
    // true to scale to max color, false to clamp to 1.0
 }
 
+bary_t computeBary(int x, int y, triangle_t triangle) {
+   // TODO
+}
 
+color_t computeColor(color_t a, color_t b, color_t c, bary_t p) {
+   color_t color;
+   color.r = (a.r * p.alpha) + (b.r * p.beta) + (c.r * p.gamma);
+   color.g = (a.g * p.alpha) + (b.g * p.beta) + (c.g * p.gamma);
+   color.b = (a.b * p.alpha) + (b.b * p.beta) + (c.b * p.gamma);
+   color.f = (a.f * p.alpha) + (b.f * p.beta) + (c.f * p.gamma);
+
+   return color;
+}

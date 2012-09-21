@@ -21,4 +21,10 @@ typedef struct bary_struct {
    double gamma;
 } bary_t;
 
+typedef struct triangle_struct {
+   vertex_t a;
+   vertex_t b;
+   vertex_t c;
+} triangle_t;
+
 #endif
