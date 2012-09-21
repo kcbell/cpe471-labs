@@ -61,6 +61,7 @@ int main(void)
    // true to scale to max color, false to clamp to 1.0
 }
 
+<<<<<<< HEAD
 void rasterizeTriangle(const Image &img, triangle_t tri)
 {
    // Calculate bounding box
@@ -85,6 +86,19 @@ void rasterizeTriangle(const Image &img, triangle_t tri)
 
 bary_t computeBary(int x, int y, triangle_t triangle) {
    // TODO
+=======
+int det(int a, int b, int c, int d) {
+   return (a * d) - (b * c);
+}
+
+bary_t computeBary(int x, int y, triangle_t t) {
+   bary_t ret;
+   double area = 0.5 * det(t.c.x - t.a.x, t.b.x - t.a.x, t.c.y - t.a.y, t.b.y - t.a.y);
+   ret.beta = 0.5 * det(t.a.x - t.c.x, x - t.c.x, t.a.y - t.c.y, y - t.c.y) / area;
+   ret.gamma = 0.5 * det(t.b.x - t.a.x, x - t.a.x, t.b.y - t.a.y, y - t.a.y) / area;
+   ret.alpha = 1 - ret.beta - ret.gamma
+   return ret;
+>>>>>>> 760c9b52ea47d332c74214c66871edc8ac04fb0c
 }
 
 color_t computeColor(color_t a, color_t b, color_t c, bary_t p) {
