@@ -20,10 +20,6 @@ int main(void)
    // Get input, one vertex per line
    string input;
    vertex_t vertices[3];
-   int min_x = IMG_WIDTH;
-   int max_x = 0;
-   int min_y = IMG_HEIGHT;
-   int max_y = 0;
    for (int coord = 0; coord < 6; coord++)
    {
       if (coord % 2 == 0)
@@ -61,23 +57,32 @@ int main(void)
    // true to scale to max color, false to clamp to 1.0
 }
 
-void rasterizeTriangle(const Image &img, triangle_t tri)
+void rasterizeTriangle(const Image &img, triangle_t t)
 {
    // Calculate bounding box
+   int min_x = img.width();
+   int max_x = 0;
+   int min_y = img.height();
+   int max_y = 0;
 
+   min_x = min(min_x, min(t.a.x, min(t.b.x, t.c.x)));
+   min_y = min(min_y, min(t.a.y, min(t.b.y, t.c.y)));
+   max_x = max(max_x, max(t.a.x, max(t.b.x, t.c.x)));
+   max_y = max(max_y, max(t.a.y, max(t.b.y, t.c.y)));
+   
    // For each pixel in bounding box
    for (int y = min_y; y <= max_y; y++)
       for (int x = min_x; x <= max_x; x++)
       {
          // Calculate barycentric coordinates
-         bary_t bary = computeBary(x, y, tri);
+         bary_t bary = computeBary(x, y, t);
          // If coords are in bounds
          if (bary.alpha >= 0 && bary.alpha <= 1 &&
              bary.beta  >= 0 && bary.beta  <= 1 &&
              bary.gamma >= 0 && bary.gamma <= 1)
          {
             // Color the pixel
-            color_t color = computeColor(tri, bary);
+            color_t color = computeColor(t, bary);
             img.pixel(x, y, color);
          }
       }
