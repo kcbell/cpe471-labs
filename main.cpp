@@ -60,3 +60,5 @@ int main(void)
    img.WriteTga((char *)"awesome.tga", true);
    // true to scale to max color, false to clamp to 1.0
 }
+
+
