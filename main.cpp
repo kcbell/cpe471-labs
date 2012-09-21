@@ -11,6 +11,11 @@
 #include <iostream>
 using namespace std;
 
+void rasterizeTriangle(Image &img, triangle_t t);
+int det(int a, int b, int c, int d);
+bary_t computeBary(int x, int y, triangle_t t, double area);
+color_t computeColor(triangle_t t, bary_t p);
+
 int main(void)
 {
    int IMG_WIDTH = 640;
@@ -49,7 +54,7 @@ int main(void)
    // true to scale to max color, false to clamp to 1.0
 }
 
-void rasterizeTriangle(const Image &img, triangle_t t)
+void rasterizeTriangle(Image &img, triangle_t t)
 {
    // Calculate bounding box
    int min_x = img.width();
@@ -89,14 +94,18 @@ int det(int a, int b, int c, int d) {
 
 bary_t computeBary(int x, int y, triangle_t t, double area) {
    bary_t ret;
-   ret.beta = 0.5 * det(t.a.x - t.c.x, x - t.c.x, t.a.y - t.c.y, y - t.c.y) / area;
-   ret.gamma = 0.5 * det(t.b.x - t.a.x, x - t.a.x, t.b.y - t.a.y, y - t.a.y) / area;
-   ret.alpha = 1 - ret.beta - ret.gamma
+   ret.beta = -0.5 * det(t.a.x - t.c.x, x - t.c.x, t.a.y - t.c.y, y - t.c.y) / area;
+   ret.gamma = -0.5 * det(t.b.x - t.a.x, x - t.a.x, t.b.y - t.a.y, y - t.a.y) / area;
+   ret.alpha = 1 - ret.beta - ret.gamma;
+   printf("(%d, %d): a=%f b=%f g=%f\n", x, y, ret.alpha, ret.beta, ret.gamma);
    return ret;
 }
 
-color_t computeColor(color_t a, color_t b, color_t c, bary_t p) {
+color_t computeColor(triangle_t t, bary_t p) {
    color_t color;
+   color_t a = t.aC;
+   color_t b = t.bC;
+   color_t c = t.cC;
    color.r = (a.r * p.alpha) + (b.r * p.beta) + (c.r * p.gamma);
    color.g = (a.g * p.alpha) + (b.g * p.beta) + (c.g * p.gamma);
    color.b = (a.b * p.alpha) + (b.b * p.beta) + (c.b * p.gamma);
