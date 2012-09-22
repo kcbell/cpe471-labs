@@ -1,4 +1,5 @@
 triangle:
 	g++ *.cpp
-	a.out < test
+	./a.out < test
 	eog awesome.tga &
+
