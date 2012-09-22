@@ -76,10 +76,11 @@ void rasterizeTriangle(Image &img, triangle_t t)
       {
          // Calculate barycentric coordinates
          bary_t bary = computeBary(x, y, t, area);
+         printf("(%d, %d): a=%f b=%f g=%f\n", x, y, bary.alpha, bary.beta, bary.gamma);
          // If coords are in bounds
-         if (bary.alpha >= 0 && bary.alpha <= 1 &&
-             bary.beta  >= 0 && bary.beta  <= 1 &&
-             bary.gamma >= 0 && bary.gamma <= 1)
+         if (bary.alpha >= -0.001 && bary.alpha <= 1.0 &&
+             bary.beta  >= -0.001 && bary.beta  <= 1.0 &&
+             bary.gamma >= -0.001 && bary.gamma <= 1.0)
          {
             // Color the pixel
             color_t color = computeColor(t, bary);
@@ -97,7 +98,6 @@ bary_t computeBary(int x, int y, triangle_t t, double area) {
    ret.beta = -0.5 * det(t.a.x - t.c.x, x - t.c.x, t.a.y - t.c.y, y - t.c.y) / area;
    ret.gamma = -0.5 * det(t.b.x - t.a.x, x - t.a.x, t.b.y - t.a.y, y - t.a.y) / area;
    ret.alpha = 1 - ret.beta - ret.gamma;
-   printf("(%d, %d): a=%f b=%f g=%f\n", x, y, ret.alpha, ret.beta, ret.gamma);
    return ret;
 }
 
