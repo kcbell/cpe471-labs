@@ -25,6 +25,9 @@ typedef struct triangle_struct {
    vertex_t a;
    vertex_t b;
    vertex_t c;
+   color_t aC;
+   color_t bC;
+   color_t cC;
 } triangle_t;
 
 #endif
