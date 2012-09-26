@@ -15,11 +15,13 @@ void rasterizeTriangle(Image &img, triangle_t t);
 int det(int a, int b, int c, int d);
 bary_t computeBary(int x, int y, triangle_t t, double area);
 color_t computeColor(triangle_t t, bary_t p);
+triangle_t transform(triangle_t t, int w, int h);
+vertex_t transformVertex(vertex_t v, int w, int h);
 
 int main(void)
 {
-   int IMG_WIDTH = 640;
-   int IMG_HEIGHT = 480;
+   int WIDTH = 960;
+   int HEIGHT = 600;
    triangle_t t;
 
    cin >> t.a.x;
@@ -44,14 +46,50 @@ int main(void)
    t.cC.b = 1.0;
    t.cC.f = 1.0;
 
-   // make a 640x480 image (allocates buffer on the heap)
-   Image img(640, 480);
-
-   rasterizeTriangle(img, t);
+   // make a image (allocates buffer on the heap)
+   Image img(WIDTH, HEIGHT);
+   
+   rasterizeTriangle(img, transform(t, WIDTH, HEIGHT));
 
    // write the targa file to disk
    img.WriteTga((char *)"awesome.tga", true);
    // true to scale to max color, false to clamp to 1.0
+}
+
+triangle_t transform(triangle_t t, int w, int h) {
+  printf("(%d, %d), (%d, %d), (%d, %d)\n", t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y);
+  t.a = transformVertex(t.a, w, h);
+  t.b = transformVertex(t.b, w, h);
+  t.c = transformVertex(t.c, w, h);
+  printf("(%d, %d), (%d, %d), (%d, %d)\n", t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y);
+  return t;
+}
+
+vertex_t transformVertex(vertex_t v, int w, int h) {
+   double l = -w/(double)h;
+   double r = w/(double)h;
+   double b = -1.0;
+   double t = 1.0;
+   
+   // c * Xw + d = Xp
+   // e * Yw + f = Yp
+
+   // c * l + d = 0
+   // c * r + d = w-1
+   // ----------------
+   // c(l-r) = -(w-1)
+   double c = -(w-1) / (l-r);
+   double d = (w-1) - (c*r);
+
+   // e * b + f = 0
+   // e * t + f = h-1
+   double e = -(h-1) / (b-t);
+   double f = (h-1) - (e*t);
+
+   v.x = (int)(c * v.x + d);
+   v.y = (int)(e * v.y + f);
+
+   return v;
 }
 
 void rasterizeTriangle(Image &img, triangle_t t)
