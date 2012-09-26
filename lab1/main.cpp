@@ -22,32 +22,14 @@ int main(void)
    int IMG_HEIGHT = 480;
    triangle_t t;
 
-   cin >> t.a.x;
-   cin >> t.a.y;
-   cin >> t.b.x;
-   cin >> t.b.y;
-   cin >> t.c.x;
-   cin >> t.c.y;
-
-   t.aC.r = 1.0;
-   t.aC.g = 0.0;
-   t.aC.b = 0.0;
-   t.aC.f = 1.0;
-   
-   t.bC.r = 0.0;
-   t.bC.g = 1.0;
-   t.bC.b = 0.0;
-   t.bC.f = 1.0;
-   
-   t.cC.r = 0.0;
-   t.cC.g = 0.0;
-   t.cC.b = 1.0;
-   t.cC.f = 1.0;
+   // Read a mesh from file
+   CMesh* mesh;
+   mesh = CMeshLoader::loadASCIIMesh(argv[1]);
 
    // make a 640x480 image (allocates buffer on the heap)
    Image img(640, 480);
 
-   rasterizeTriangle(img, t);
+   rasterizeMesh(img, mesh);
 
    // write the targa file to disk
    img.WriteTga((char *)"awesome.tga", true);
