@@ -22,8 +22,7 @@ class CMesh;
 
 class CMeshLoader
 {
-   public:
-      
+
 	/*!
 	 * Attempts to load a mesh from an ascii .m file
 	 * \return A pointer to a mesh object or NULL if the mesh failed to load
@@ -38,6 +37,8 @@ class CMeshLoader
 	 * \param ColorBufferHandle Returns a handle to the color buffer object
 	 */
 	static void createVertexBufferObject(CMesh const & Mesh, int & TriangleCount, GLuint & PositionBufferHandle, GLuint & ColorBufferHandle);
+
+public:
 
 	static bool loadVertexBufferObjectFromMesh(std::string const & fileName, int & TriangleCount, GLuint & PositionBufferHandle, GLuint & ColorBufferHandle);
 

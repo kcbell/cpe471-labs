@@ -6,43 +6,55 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Image.h"
-#include "CMeshLoaderSimple.h"
 #include "types.h"
 #include <string>
 #include <iostream>
 using namespace std;
 
-void rasterizeTriangle(Image &img, STriangle t);
+void rasterizeTriangle(Image &img, triangle_t t);
 int det(int a, int b, int c, int d);
-bary_t computeBary(int x, int y, STriangle t, double area);
-SColor computeColor(STriangle t, bary_t p, CMesh* mesh);
-void rasterizeMesh(Image &img, CMesh* mesh);
+bary_t computeBary(int x, int y, triangle_t t, double area);
+color_t computeColor(triangle_t t, bary_t p);
 
-int main(int argc, char** argv)
+int main(void)
 {
    int IMG_WIDTH = 640;
    int IMG_HEIGHT = 480;
+   triangle_t t;
 
-   // Read a mesh from file
-   CMesh* mesh;
-   mesh = CMeshLoader::loadASCIIMesh(argv[1]);
+   cin >> t.a.x;
+   cin >> t.a.y;
+   cin >> t.b.x;
+   cin >> t.b.y;
+   cin >> t.c.x;
+   cin >> t.c.y;
+
+   t.aC.r = 1.0;
+   t.aC.g = 0.0;
+   t.aC.b = 0.0;
+   t.aC.f = 1.0;
    
+   t.bC.r = 0.0;
+   t.bC.g = 1.0;
+   t.bC.b = 0.0;
+   t.bC.f = 1.0;
+   
+   t.cC.r = 0.0;
+   t.cC.g = 0.0;
+   t.cC.b = 1.0;
+   t.cC.f = 1.0;
+
    // make a 640x480 image (allocates buffer on the heap)
    Image img(640, 480);
 
-   rasterizeMesh(img, mesh);
+   rasterizeTriangle(img, t);
 
    // write the targa file to disk
    img.WriteTga((char *)"awesome.tga", true);
    // true to scale to max color, false to clamp to 1.0
 }
 
-void rasterizeMesh(Image &img, CMesh* mesh)
-{
-   
-}
-
-void rasterizeTriangle(Image &img, STriangle t)
+void rasterizeTriangle(Image &img, triangle_t t)
 {
    // Calculate bounding box
    int min_x = img.width();
@@ -80,31 +92,23 @@ int det(int a, int b, int c, int d) {
    return (a * d) - (b * c);
 }
 
-bary_t computeBary(int x, int y, STriangle t, double area, CMesh* mesh)
-{
+bary_t computeBary(int x, int y, triangle_t t, double area) {
    bary_t ret;
-   ret.beta = -0.5 * det(mesh->Vertices.at(VertexIndex1).X - mesh->Vertices.at(VertexIndex3).X,
-         x - mesh->Vertices.at(VertexIndex3).X,
-         mesh->Vertices.at(VertexIndex1).Y - mesh->Vertices.at(VertexIndex3).Y,
-         y - mesh->Vertices.at(VertexIndex3).Y) / area;
-   ret.gamma = -0.5 * det(mesh->Vertices.at(VertexIndex2).X - mesh->Vertices.at(VertexIndex1).X,
-         x - mesh->Vertices.at(VertexIndex1).X,
-         mesh->Vertices.at(VertexIndex2).Y - mesh->Vertices.at(VertexIndex1).Y,
-         y - mesh->Vertices.at(VertexIndex1).Y) / area;
+   ret.beta = -0.5 * det(t.a.x - t.c.x, x - t.c.x, t.a.y - t.c.y, y - t.c.y) / area;
+   ret.gamma = -0.5 * det(t.b.x - t.a.x, x - t.a.x, t.b.y - t.a.y, y - t.a.y) / area;
    ret.alpha = 1 - ret.beta - ret.gamma;
    return ret;
 }
 
-SColor computeColor(STriangle t, bary_t p, CMesh * mesh)
-{
-   SColor color;
-   SColor a = mesh->Vertices.at(VertexIndex1).Color;
-   SColor b = mesh->Vertices.at(VertexIndex2).Color;
-   SColor c = mesh->Vertices.at(VertexIndex3).Color;
-   color.Red = (a.Red * p.alpha) + (b.Red * p.beta) + (c.Red * p.gamma);
-   color.Green = (a.Green * p.alpha) + (b.Green * p.beta) + (c.Green * p.gamma);
-   color.Blue = (a.Blue * p.alpha) + (b.Blue * p.beta) + (c.Blue * p.gamma);
-   //color.f = (a.f * p.alpha) + (b.f * p.beta) + (c.f * p.gamma);
+color_t computeColor(triangle_t t, bary_t p) {
+   color_t color;
+   color_t a = t.aC;
+   color_t b = t.bC;
+   color_t c = t.cC;
+   color.r = (a.r * p.alpha) + (b.r * p.beta) + (c.r * p.gamma);
+   color.g = (a.g * p.alpha) + (b.g * p.beta) + (c.g * p.gamma);
+   color.b = (a.b * p.alpha) + (b.b * p.beta) + (c.b * p.gamma);
+   color.f = (a.f * p.alpha) + (b.f * p.beta) + (c.f * p.gamma);
 
    return color;
 }

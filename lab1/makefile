@@ -1,5 +1,5 @@
 triangle:
 	g++ *.cpp
-	./a.out bunny500.m
+	./a.out < test
 	eog awesome.tga &
 
