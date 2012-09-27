@@ -8,10 +8,8 @@
  *
  */
 
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#include <OPENGL/gl.h>
-#endif
+#include <GL/glut.h>
+#include <GL/gl.h>
 
 #include <stdlib.h>
 #include <stdio.h>
