@@ -57,11 +57,11 @@ int main(void)
 }
 
 triangle_t transform(triangle_t t, int w, int h) {
-  printf("(%d, %d), (%d, %d), (%d, %d)\n", t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y);
+  //printf("(%d, %d), (%d, %d), (%d, %d)\n", t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y);
   t.a = transformVertex(t.a, w, h);
   t.b = transformVertex(t.b, w, h);
   t.c = transformVertex(t.c, w, h);
-  printf("(%d, %d), (%d, %d), (%d, %d)\n", t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y);
+  //printf("(%d, %d), (%d, %d), (%d, %d)\n", t.a.x, t.a.y, t.b.x, t.b.y, t.c.x, t.c.y);
   return t;
 }
 
