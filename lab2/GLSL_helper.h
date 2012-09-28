@@ -8,8 +8,13 @@
  *
  */
 
+#ifdef __APPLE__
+#include "GLUT/glut.h"
+#include <OPENGL/gl.h>
+#endif
+#ifdef __unix__
 #include <GL/glut.h>
-#include <GL/gl.h>
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>

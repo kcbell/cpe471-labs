@@ -23,14 +23,35 @@
 GLfloat vertexPos[] = {
  -0.5, -0.5, 0.0, 1.0,
  0, 0.5, 0.0, 1.0,
- 0.5, -0.5, 0.0, 1.0
+ 0.5, -0.5, 0.0, 1.0,
+ 
+ -0.6, 0.5, 0.0, 1.0,
+ -0.6, -0.5, 0.0, 1.0,
+ -0.1, 0.5, 0.0, 1.0,
+ 
+ 0.6, 0.5, 0.0, 1.0,
+ 0.6, -0.5, 0.0, 1.0,
+ 0.1, 0.5, 0.0, 1.0,
 };
 
 /* the color data */
+// 0.678, 0.141, 0.075,
+// 0.637, 0.215, 0.071,
+// 0.588, 0.0941, 0.149,
+// 0.678, 0.075, 0.443,
+// 0.604, 0.071, 0.639,
 static GLfloat vertexCol[] = {
- 0.0, 0.5, 0.5, 
- 0.0, 0.0, 0.5, 
- 0.0, 0.5, 0.0, 
+ 0.678, 0.141, 0.075,
+ 0.588, 0.0941, 0.149,
+ 0.678, 0.075, 0.443,
+
+ 0.637, 0.215, 0.071,
+ 0.678, 0.141, 0.075,
+ 0.588, 0.0941, 0.149,
+
+ 0.604, 0.071, 0.639,
+ 0.678, 0.075, 0.443,
+ 0.588, 0.0941, 0.149,
 };
 
 //position and color data handles
@@ -103,7 +124,7 @@ int InstallShader(const GLchar *vShaderName) {
 void Initialize ()					// Any GL Init Code 
 {
 	// Start Of User Initialization
-	glClearColor (1.0f, 1.0f, 1.0f, 1.0f);								
+	glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
 	// Black Background
  	glClearDepth (1.0f);	// Depth Buffer Setup
  	glDepthFunc (GL_LEQUAL);	// The Type Of Depth Testing
@@ -128,7 +149,7 @@ void Draw (void)
 	safe_glVertexAttribPointer(h_aColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	//actually draw the data
-	glDrawArrays(GL_TRIANGLES, 0, 3);	
+	glDrawArrays(GL_TRIANGLES, 0, 9);
 													
 	//clean up 
 	safe_glDisableVertexAttribArray(h_aPosition);
