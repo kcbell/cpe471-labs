@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp" //perspective, trans etc
 #include "glm/gtc/type_ptr.hpp" //value_ptr
@@ -46,11 +47,12 @@ int g_CiboLen, g_GiboLen;
 static float g_width, g_height;
 float g_tx = 0;
 float g_ty = 0;
+float g_tz = 3;
 float g_trans = -5.5;
 float g_angle = 0;
 
-static const float g_groundY = -0.501;      // y coordinate of the ground
-static const float g_groundSize = 10.0;   // half the ground length
+static const float g_groundY = -0.6;      // y coordinate of the ground
+static const float g_groundSize = 1000.0;   // half the ground length
 
 //declare a matrix stack
 RenderingHelper ModelTrans;
@@ -230,8 +232,8 @@ void Draw (void)
 	/* only set the projection and view matrix once */
     SetProjectionMatrix();
     SetView();
-    
-   
+
+    #ifdef DRAW_GROUND
 	/******************* set up to draw the ground plane */
 	safe_glEnableVertexAttribArray(h_aPosition);
    	// bind vbo
@@ -251,8 +253,9 @@ void Draw (void)
 
     // Disable the attributes used by our shader
     safe_glDisableVertexAttribArray(h_aPosition);
+    #endif
 
-	/*********************** set up to draw the cube plane */
+	/*********************** set up to draw the cube */
 	safe_glEnableVertexAttribArray(h_aPosition);
     // bind vbo
     glBindBuffer(GL_ARRAY_BUFFER, CubeBuffObj);
@@ -260,16 +263,22 @@ void Draw (void)
     // bind ibo
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, CIndxBuffObj);
 
-    /* set the color in the shader */
-    glUniform3f(h_uColor, 0.1, 0.78, 0.9);
 
-    ModelTrans.pushMatrix();
+    for (int param = 0; param < 1000; param++)
+    {
+      /* set the color in the shader */
+      glUniform3f(h_uColor, 0.05, 0.78, 1.0 * sin((float)param / 50.0));
+
+      ModelTrans.pushMatrix();
       /* set up where to draw the box */
-      ModelTrans.translate(vec3(g_tx, g_ty, 0));
+      ModelTrans.translate(vec3(g_tx + 2.2 * cos(0.8 * (float)param),
+                              g_ty + 2.2 * sin(0.8 * (float)param),
+                              g_tz - param / 1.5));
       SetModel();
       // draw!
       glDrawElements(GL_TRIANGLES, g_CiboLen, GL_UNSIGNED_SHORT, 0);
-    ModelTrans.popMatrix();
+      ModelTrans.popMatrix();
+    }
 
     // Disable the attributes used by our shader
     safe_glDisableVertexAttribArray(h_aPosition);
@@ -299,6 +308,9 @@ void keyboard(unsigned char key, int x, int y ){
     case 'm':
       g_tx += .1;
       break;
+    case 'f':
+       g_tz += .2;
+       break;
     case 'q': case 'Q' :
       exit( EXIT_SUCCESS );
       break;
