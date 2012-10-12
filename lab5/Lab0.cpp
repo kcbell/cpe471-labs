@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <cstdlib>
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp" //perspective, trans etc
 #include "glm/gtc/type_ptr.hpp" //value_ptr
@@ -49,8 +50,11 @@ float g_ty = 0;
 float g_trans = -5.5;
 float g_angle = 0;
 
-static const float g_groundY = -0.501;      // y coordinate of the ground
+static const float g_groundY = 0.0;      // y coordinate of the ground
 static const float g_groundSize = 10.0;   // half the ground length
+
+int houseSizeX[] = { rand(), rand(), rand(), rand(), rand(), rand(), rand(), rand(), rand(), rand() };
+int houseSizeZ[] = { rand(), rand(), rand(), rand(), rand(), rand(), rand(), rand(), rand(), rand() };
 
 //declare a matrix stack
 RenderingHelper ModelTrans;
@@ -103,12 +107,12 @@ static void initCube() {
     -0.5, 0.5, -0.5,
     0.5, 0.5, -0.5,
     0.5, -0.5, -0.5,
-    0.0, 0.5, -0.5,
+    0.0, 0.75, -0.5,
     -0.5, -0.5, 0.5, /*front face 5 verts :5*/
     -0.5, 0.5, 0.5,
     0.5, 0.5, 0.5,
     0.5, -0.5, 0.5,
-    0.0, 0.5, 0.5,
+    0.0, 0.75, 0.5,
     -0.5, -0.5, 0.5, /*left face 4 verts :10*/
     -0.5, -0.5, -.5,
     -0.5, 0.5, -0.5,
@@ -119,13 +123,10 @@ static void initCube() {
     0.5, 0.5, 0.5
   };
 
-  /* fill in when you are ready:
-   float CubeNormal[] = {
-  }; */ 
-
-   unsigned short idx[] = {0, 1, 2,  2, 3, 0,  1, 4, 2,  5, 6, 7,  7, 8, 5,  6, 9, 7,  10, 11, 12,  12, 13, 10,  14, 15, 16,  16, 17, 14};
+   unsigned short idx[] = { 0, 1, 2,  2, 3, 0,  5, 6, 7,  7, 8, 5,  10, 11, 12,  12, 13, 10,  14, 15, 16,  16, 17, 14,
+      1, 4, 2,  6, 9, 7,  1, 4, 6,  4, 6, 9,  2, 4, 7,  4, 9, 7  };
  
-    g_CiboLen = 30;
+    g_CiboLen = 42;
     glGenBuffers(1, &CubeBuffObj);
     glBindBuffer(GL_ARRAY_BUFFER, CubeBuffObj);
     glBufferData(GL_ARRAY_BUFFER, sizeof(CubePos), CubePos, GL_STATIC_DRAW);
@@ -260,16 +261,45 @@ void Draw (void)
     // bind ibo
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, CIndxBuffObj);
 
-    /* set the color in the shader */
-    glUniform3f(h_uColor, 0.1, 0.78, 0.9);
+    float spacing_sum;
+    
+   for (int x = 0; x < 2; x++)
+   {
+      spacing_sum = 0;
+      
+      for (int y = 0; y < 10; y++)
+      {
+         ModelTrans.pushMatrix();
 
-    ModelTrans.pushMatrix();
-      /* set up where to draw the box */
-      ModelTrans.translate(vec3(g_tx, g_ty, 0));
-      SetModel();
-      // draw!
-      glDrawElements(GL_TRIANGLES, g_CiboLen, GL_UNSIGNED_SHORT, 0);
-    ModelTrans.popMatrix();
+         if (x == 0)
+         {
+            // Row across scene
+            float size = ((houseSizeX[y] % 1000) / 500.0) + .1;
+            ModelTrans.translate(vec3(g_tx + spacing_sum, g_ty - 0.5, 0));
+            ModelTrans.scale(size, size, 1);
+            ModelTrans.translate(vec3(0, .5, 0));
+            spacing_sum += size;
+         }
+         else if (x == 1)
+         {
+            // Row coming towards camera
+            ModelTrans.translate(vec3(g_tx, g_ty, 1.1*y));
+            ModelTrans.rotate(90, vec3(0, 1, 0));
+         }
+         
+         /* set up where to draw the box */
+         SetModel();
+         // draw!
+         /* set the color in the shader */
+         glUniform3f(h_uColor, abs(sin((y) * 1000.0)), 0.78, abs(cos((y+x) * 100.0)));
+         glDrawElements(GL_TRIANGLES, g_CiboLen - 3*6, GL_UNSIGNED_SHORT, 0);
+         glUniform3f(h_uColor, 0.1, 0.78, 0.0);
+         glDrawElements(GL_TRIANGLES, g_CiboLen - 3*6, GL_UNSIGNED_SHORT,
+                     (GLvoid*)(sizeof(short)*(g_CiboLen - 3*6)));
+                     
+         ModelTrans.popMatrix();
+      }
+   }
 
     // Disable the attributes used by our shader
     safe_glDisableVertexAttribArray(h_aPosition);
@@ -293,12 +323,18 @@ void ReshapeGL (int width, int height)
 void keyboard(unsigned char key, int x, int y ){
   switch( key ) {
     /* M and N key move the object in x */
-    case 'n':
+    case 'd':
       g_tx -= .1;
       break;
-    case 'm':
+    case 'a':
       g_tx += .1;
       break;
+    case 'w':
+       g_ty += .1;
+       break;
+    case 's':
+       g_ty -= .1;
+       break;
     case 'q': case 'Q' :
       exit( EXIT_SUCCESS );
       break;
