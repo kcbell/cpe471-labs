@@ -45,8 +45,9 @@ int g_CiboLen, g_GiboLen;
 
 /* globals to control positioning and window size */
 static float g_width, g_height;
-float g_tx = 0;
+float g_tx = -2.0;
 float g_ty = 0;
+float g_tz = 0;
 float g_trans = -5.5;
 float g_angle = 0;
 
@@ -262,7 +263,10 @@ void Draw (void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, CIndxBuffObj);
 
     float spacing_sum;
-    
+ 
+   float zBlockZOffset = 0.5; // change if first on X block changes Z size  
+   float xBlockXOffset = 0.5; // change if first on Z block changes X size  
+ 
    for (int x = 0; x < 2; x++)
    {
       spacing_sum = 0;
@@ -274,27 +278,35 @@ void Draw (void)
          if (x == 0)
          {
             // Row across scene
-            float size = ((houseSizeX[y] % 1000) / 500.0) + .1;
-            ModelTrans.translate(vec3(g_tx + spacing_sum, g_ty - 0.5, 0));
-            ModelTrans.scale(size, size, 1);
+            float sizeX = ((houseSizeX[y] % 1000) / 500.0) + .2;
+            float sizeY = ((houseSizeX[y] % 2000) / 750.0) + .2;
+            spacing_sum += sizeX / 2.0;
+            ModelTrans.translate(vec3(g_tx + spacing_sum + xBlockXOffset, g_ty - 0.5, g_tz));
+            ModelTrans.scale(sizeX, sizeY, 1.0);
             ModelTrans.translate(vec3(0, .5, 0));
-            spacing_sum += size;
+            spacing_sum += sizeX / 2.0;
          }
          else if (x == 1)
          {
             // Row coming towards camera
-            ModelTrans.translate(vec3(g_tx, g_ty, 1.1*y));
+            float sizeX = ((houseSizeZ[y] % 1000) / 500.0) + .2;
+            float sizeY = ((houseSizeZ[y] % 2000) / 750.0) + .2;
+            spacing_sum += sizeX / 2.0;
+            ModelTrans.translate(vec3(g_tx, g_ty - 0.5, g_tz + spacing_sum + zBlockZOffset));
             ModelTrans.rotate(90, vec3(0, 1, 0));
+            ModelTrans.scale(sizeX, sizeY, 1.0);
+            ModelTrans.translate(vec3(0, .5, 0));
+            spacing_sum += sizeX / 2.0;
          }
          
          /* set up where to draw the box */
          SetModel();
          // draw!
          /* set the color in the shader */
-         glUniform3f(h_uColor, abs(sin((y) * 1000.0)), 0.78, abs(cos((y+x) * 100.0)));
+         glUniform3f(h_uColor, abs(sin((y+x) * 3.14159 / 8.0)), 0.78, abs(cos((y+x) * 3.14159 / 16.0)));
          glDrawElements(GL_TRIANGLES, g_CiboLen - 3*6, GL_UNSIGNED_SHORT, 0);
-         glUniform3f(h_uColor, 0.1, 0.78, 0.0);
-         glDrawElements(GL_TRIANGLES, g_CiboLen - 3*6, GL_UNSIGNED_SHORT,
+         glUniform3f(h_uColor, 0.3, 0.3, 0.3);
+         glDrawElements(GL_TRIANGLES, 3*6, GL_UNSIGNED_SHORT,
                      (GLvoid*)(sizeof(short)*(g_CiboLen - 3*6)));
                      
          ModelTrans.popMatrix();
@@ -335,6 +347,12 @@ void keyboard(unsigned char key, int x, int y ){
     case 's':
        g_ty -= .1;
        break;
+    case 'z':
+      g_tz -= .1;
+      break;
+    case 'x':
+      g_tz += .1;
+      break;
     case 'q': case 'Q' :
       exit( EXIT_SUCCESS );
       break;
