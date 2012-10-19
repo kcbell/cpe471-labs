@@ -44,14 +44,16 @@ GLuint CubeBuffObj, CIndxBuffObj, GrndBuffObj, GIndxBuffObj, NormalBuffObj;
 int g_CiboLen, g_GiboLen;
 
 static float g_width, g_height;
-static const float g_groundY = 0.0;      // y coordinate of the ground
-static const float g_groundSize = 10.0;   // half the ground length
+float camera_trans = -5.5; // Camera controls
+float camera_angle = 0;
 
 vec3 cube_translate;
 mat4 cube_rotate;
 float cube_scale;
 
 RenderingHelper ModelTrans;
+
+vec2 screenToFractionalCoords(int x, int y);
 
 /* projection matrix - do not change - sets matrix in shader */
 void SetProjectionMatrix() {
@@ -61,8 +63,8 @@ void SetProjectionMatrix() {
 
 /* camera controls - do not change - sets matrix in shader */
 void SetView() {
-   glm::mat4 Trans = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0, g_trans));
-   glm::mat4 RotateX = glm::rotate( Trans, g_angle, glm::vec3(0.0f, 1, 0));
+   glm::mat4 Trans = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0, camera_trans));
+   glm::mat4 RotateX = glm::rotate( Trans, camera_angle, glm::vec3(0.0f, 1, 0));
    safe_glUniformMatrix4fv(h_uViewMatrix, glm::value_ptr(RotateX));
 }
 
@@ -95,9 +97,9 @@ static void initCube()
       0.5, 0.5, 0.5
    };
 
-   unsigned short idx[] = { 0, 1, 2,  2, 3, 0,  5, 6, 7,  7, 8, 5,  10, 11, 12,  12, 13, 10,  /* 14, 15, 16,  16, 17, 14 */ };
+   unsigned short idx[] = {0, 1, 2,  2, 3, 0,  1, 4, 2,  5, 6, 7,  7, 8, 5,  6, 9, 7,  10, 11, 12,  12, 13, 10,  14, 15, 16,  16, 17, 14};
 
-   g_CiboLen = 18;
+   g_CiboLen = 30;
    glGenBuffers(1, &CubeBuffObj);
    glBindBuffer(GL_ARRAY_BUFFER, CubeBuffObj);
    glBufferData(GL_ARRAY_BUFFER, sizeof(CubePos), CubePos, GL_STATIC_DRAW);
@@ -105,10 +107,6 @@ static void initCube()
    glGenBuffers(1, &CIndxBuffObj);
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, CIndxBuffObj);
    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(idx), idx, GL_STATIC_DRAW);
-
-   cube_translate = vec3(0.0);
-   cube_scale = 0.0;
-   cube_rotate = mat4(1.0); //The identity matrix
 }
 
 void InitGeom() {
@@ -175,7 +173,7 @@ int InstallShader(const GLchar *vShaderName, const GLchar *fShaderName) {
 void Initialize ()					// Any GL Init Code 
 {
    // Start Of User Initialization
-   glClearColor (1.0f, 1.0f, 1.0f, 1.0f);								
+   glClearColor (0.1, 0.1, 0.1, 1.0f);
    // Black Background
    glClearDepth (1.0f);	// Depth Buffer Setup
    glDepthFunc (GL_LEQUAL);	// The Type Of Depth Testing
@@ -184,6 +182,10 @@ void Initialize ()					// Any GL Init Code
    /* some matrix stack init */
    ModelTrans.useModelViewMatrix();
    ModelTrans.loadIdentity();
+
+   cube_translate = vec3(0.0);
+   cube_scale = 1.0;
+   cube_rotate = mat4(1.0); //The identity matrix
 }
 
 /* Main display function */
@@ -205,14 +207,15 @@ void Draw (void)
    // bind ibo
    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, CIndxBuffObj);
 
-   glUniform3f(h_uColor, 0.5, 0.05, 0.2); //Cube color
+   glUniform3f(h_uColor, 0.5, 0.05, 0.4); //Cube color
 
    ModelTrans.pushMatrix();
 
    ModelTrans.translate(cube_translate);
    ModelTrans.scale(cube_scale, cube_scale, cube_scale);
    ModelTrans.multMatrix(cube_rotate);
-
+   
+   SetModel();
    glDrawElements(GL_TRIANGLES, g_CiboLen, GL_UNSIGNED_SHORT, 0);
 
    ModelTrans.popMatrix();
@@ -233,21 +236,10 @@ void ReshapeGL (int width, int height)
 
 }
 
-void keyboard(unsigned char key, int x, int y ){
-   switch( key ) {
-   case 'r':
-      // Reset all transformations
-      cube_translate = vec3(0.0);
-      cube_scale = 1.0;
-      cube_rotate = mat4(1.0); //The identity matrix
-      break;
-   }
-   glutPostRedisplay();
-}
-
 bool mouse_left_down;
-bool mouse_right_down;
 int drag_begin_x, drag_begin_y;
+int nav_mode = 0;
+const int MODE_ROTATE = 1, MODE_SCALE = 2, MODE_PAN = 3;
 
 void mouse(int button, int state, int x, int y)
 {
@@ -255,30 +247,13 @@ void mouse(int button, int state, int x, int y)
    {
       if (state == GLUT_DOWN)
       {
-         printf("left mouse down at %d %d\n", x, y);
-         left_down = true;
+         mouse_left_down = true;
          drag_begin_x = x;
          drag_begin_y = y;
       }
       else if (state == GLUT_UP)
       {
-         printf("left mouse up at %d %d\n", x, y);
-         left_down = false;
-      }
-   }
-   else if (button == GLUT_RIGHT_BUTTON)
-   {
-      if (state == GLUT_DOWN)
-      {
-         printf("right mouse down at %d %d\n", x, y);
-         right_down = true;
-         drag_begin_x = x;
-         drag_begin_y = y;
-      }
-      else if (state == GLUT_UP)
-      {
-         printf("right mouse up at %d %d\n", x, y);
-         right_down = false;
+         mouse_left_down = false;
       }
    }
 }
@@ -287,67 +262,115 @@ void mouseMove(int x, int y)
 {
    vec2 begin, end;
    float beginDist, endDist;
-   if (mouse_left_down)
+   
+   begin = screenToFractionalCoords(drag_begin_x, drag_begin_y);
+   end   = screenToFractionalCoords(x, y);
+   beginDist = sqrt((float)pow(begin.x, 2) + pow(begin.y, 2));
+   endDist   = sqrt((float)pow(end.x, 2) + pow(end.y, 2));
+
+   if (nav_mode == MODE_SCALE)
    {
-      begin = screenToFractionalCoords(drag_begin_x, drag_begin_y);
-      end   = screenToFractionalCoords(x, y);
-      beginDist = sqrt(pow(begin.x, 2) + pow(begin.y, 2));
-      endDist   = sqrt(pow(x, 2) + pow(y, 2));
+      float scaleFactor = endDist / beginDist;
+      if (scaleFactor != 0)
+         cube_scale *= scaleFactor;
    }
-
-   if (mouse_left_down && mouse_right_down)
+   else if (nav_mode == MODE_ROTATE)
    {
-      // Scale
-
-      cube_scale *= beginDist / endDist;
-   }
-   else if (mouse_left_down)
-   {
-      // Rotate
-
       float alpha;
       vec3 u, v, axis;
 
-      // 1. compute 2 vec3's for mousedown and mouseup u and v
-      u = vec3(begin.x, begin.y, asin(1/beginDist));
-      v = vec3(end.x, end.y, asin(1/endDist));
+      // Constrain begin and end to a radius of .99
+      float RADIUS = 0.99;
+      if (beginDist > RADIUS)
+      {
+         begin.x /= beginDist / RADIUS;
+         begin.y /= beginDist / RADIUS;
+         beginDist = RADIUS;
+      }
+      if (endDist > RADIUS)
+      {
+         end.x /= endDist / RADIUS;
+         end.y /= endDist / RADIUS;
+         endDist = RADIUS;
+      }
 
-      // 2. compute axis of rotation u cross v
+      // 1. Compute two vec3's for mousedown and mouseup u and v
+      u = vec3(begin.x, begin.y, sqrt(1.0 - pow(beginDist,2)));
+      v = vec3(end.x, end.y, sqrt(1.0 - pow(endDist,2)));
+
+      // 2. Compute axis of rotation u cross v
       axis = vec3(
          u.y*v.z - u.z*v.y,
          u.z*v.x - u.x*v.z,
          u.x*v.y - u.y*v.x);
 
-      // 3. compute angle of rotation alpha = acos(u dot v)
-      alpha = acos(u.x * v.x + u.y * v.y);
+      // 3. Compute angle of rotation alpha = acos(u dot v)
+      float udotv = u.x * v.x + u.y * v.y + u.z * v.z;
+      if (udotv < -1.0 || udotv > 1.0)
+         return;
+      alpha = acos(udotv);
       // 3a. convert rad to deg
-      alpha *= 180/atan(1)*4; //atan(1)*4 = pi
+      alpha *= 180/3.14159265;
 
       // 4. rotate(alpha, axis)
       cube_rotate = glm::rotate(cube_rotate, alpha, axis);
    }
-   else if (mouse_right_down)
+   else if (nav_mode == MODE_PAN)
    {
-      // Pan
       cube_translate = vec3(
-         cube_translate.x + x - drag_begin_x,
-         cube_translate.y + y - drag_begin_y,
+         cube_translate.x + (x - drag_begin_x) / 100.0,
+         cube_translate.y - (y - drag_begin_y) / 100.0,
+         cube_translate.z);
+
+      cube_translate = vec3(
+         cube_translate.x + 1.5 * (end.x - begin.x),
+         cube_translate.y + 1.5 * (end.y - begin.y),
          cube_translate.z);
    }
 
-   if (mouse_left_down || mouse_right_down)
+   if (mouse_left_down)
    {
-      //printf("mouse moved %d %d", x, y);
       drag_begin_x = x;
       drag_begin_y = y;
+      glutPostRedisplay();
    }
 }
 
 vec2 screenToFractionalCoords(int x, int y)
 {
-   return vec2(
+   vec2 result(
       2.0 * x/(float)glutGet(GLUT_WINDOW_WIDTH)  - 1,
-      2.0 * y/(float)glutGet(GLUT_WINDOW_HEIGHT) - 1);
+      -2.0 * y/(float)glutGet(GLUT_WINDOW_HEIGHT) + 1);
+   return result;
+}
+
+void keyboard(unsigned char key, int x, int y ){
+   switch( key ) {
+   case 'r':
+      // Reset all transformations
+      cube_translate = vec3(0.0);
+      cube_scale = 1.0;
+      cube_rotate = mat4(1.0); //The identity matrix
+      printf("View Reset\n");
+      break;
+   case 'q':
+      exit(0);
+      break;
+   case 'a':
+      nav_mode = MODE_PAN;
+      printf("Mode: Pan\n");
+      break;
+   case 's':
+      nav_mode = MODE_ROTATE;
+      printf("Mode: Rotate\n");
+      break;
+   case 'd':
+      nav_mode = MODE_SCALE;
+      printf("Mode: Scale\n");
+      break;
+      
+   }
+   glutPostRedisplay();
 }
 
 int main( int argc, char *argv[] )
@@ -373,6 +396,9 @@ int main( int argc, char *argv[] )
    }
 
    InitGeom();
+
+   printf("\nA - Pan mode\nS - Rotate mode\nD - Scale mode\nR - Reset\nQ - Quit\n\n");
+   
    glutMainLoop();
    return 0;
 }
