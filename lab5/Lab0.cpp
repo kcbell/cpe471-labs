@@ -313,7 +313,7 @@ void mouseMove(int x, int y)
       alpha *= 180/3.14159265;
 
       // 4. rotate(alpha, axis)
-      cube_rotate = glm::rotate(cube_rotate, alpha, axis);
+      cube_rotate = rotate(mat4(1.0), alpha, axis) * cube_rotate;
    }
    else if (nav_mode == MODE_PAN)
    {
