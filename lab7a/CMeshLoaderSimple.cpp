@@ -187,7 +187,6 @@ bool CMeshLoader::loadVertexBufferObjectFromMesh(std::string const & fileName, i
 		return false;
 
     //ADD code to resize the mesh and to reposition it at the origin
-    Mesh
 
     //ADD code to create a VBO for the mesh
 	
