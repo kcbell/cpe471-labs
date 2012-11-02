@@ -9,6 +9,8 @@
 #include <string>
 #include <streambuf>
 
+#include "GLSL_helper.h"
+
 class SColor
 {
 
@@ -166,11 +168,11 @@ class CMesh
 
     std::vector<SVertex> Vertices;
     std::vector<STriangle> Triangles;
-
+    
     CMesh();
 
 public:
-
+    
     ~CMesh();
 
 	void centerMeshByAverage(SVector3 const & CenterLocation);
@@ -180,17 +182,81 @@ public:
 
 };
 
-bool CMeshLoader::loadVertexBufferObjectFromMesh(std::string const & fileName, int & TriangleCount, GLuint & PositionBufferHandle, GLuint & ColorBufferHandle)
+bool CMeshLoader::loadVertexBufferObjectFromMesh(std::string const & fileName,
+   int & TriangleCount, GLuint & PositionBufferHandle,
+   GLuint & ColorBufferHandle)
 {
 	CMesh * Mesh = loadASCIIMesh(fileName);
 	if (! Mesh)
 		return false;
 
-    //ADD code to resize the mesh and to reposition it at the origin
 
-    //ADD code to create a VBO for the mesh
+    //ADD code to resize the mesh and to reposition it at the origin
+    Mesh->resizeMesh(SVector3(1));
+    Mesh->centerMeshByExtents(SVector3(0));
+
+    createVertexBufferObject(*Mesh, TriangleCount, PositionBufferHandle,
+                             ColorBufferHandle);
 	
 	return true;
+}
+
+void CMeshLoader::createVertexBufferObject(CMesh const & Mesh, int & TriangleCount,
+   GLuint & PositionBufferHandle, GLuint & ColorBufferHandle)
+{
+
+   std::vector<GLfloat> MeshVertices;
+   std::vector<GLfloat> MeshColors;
+
+   TriangleCount = 0;
+
+   //Fill MeshIndices with idx
+   std::vector<CMesh::STriangle>::const_iterator indexIter = Mesh.Triangles.begin();
+   for (; indexIter != Mesh.Triangles.end(); ++indexIter)
+   {
+      SVertex v1 = Mesh.Vertices[indexIter->VertexIndex1];
+      MeshVertices.push_back(v1.Position.X);
+      MeshVertices.push_back(v1.Position.Y);
+      MeshVertices.push_back(v1.Position.Z);
+      MeshVertices.push_back(1);
+
+      MeshColors.push_back(indexIter->Color.Red);
+      MeshColors.push_back(indexIter->Color.Green);
+      MeshColors.push_back(indexIter->Color.Blue);
+      
+      SVertex v2 = Mesh.Vertices[indexIter->VertexIndex2];
+      MeshVertices.push_back(v2.Position.X);
+      MeshVertices.push_back(v2.Position.Y);
+      MeshVertices.push_back(v2.Position.Z);
+      MeshVertices.push_back(1);
+
+      MeshColors.push_back(indexIter->Color.Red);
+      MeshColors.push_back(indexIter->Color.Green);
+      MeshColors.push_back(indexIter->Color.Blue);
+
+      SVertex v3 = Mesh.Vertices[indexIter->VertexIndex3];
+      MeshVertices.push_back(v3.Position.X);
+      MeshVertices.push_back(v3.Position.Y);
+      MeshVertices.push_back(v3.Position.Z);
+      MeshVertices.push_back(1);
+
+      MeshColors.push_back(indexIter->Color.Red);
+      MeshColors.push_back(indexIter->Color.Green);
+      MeshColors.push_back(indexIter->Color.Blue);
+      
+      TriangleCount++;
+   }
+   
+   //ADD code to create a VBO for the mesh
+   glGenBuffers(1, &PositionBufferHandle);
+   glBindBuffer(GL_ARRAY_BUFFER, PositionBufferHandle);
+   glBufferData(GL_ARRAY_BUFFER, MeshVertices.size()*sizeof(GLfloat),
+                & MeshVertices.front(), GL_STATIC_DRAW);
+
+   glGenBuffers(1, &ColorBufferHandle);
+   glBindBuffer(GL_ARRAY_BUFFER, ColorBufferHandle);
+   glBufferData(GL_ARRAY_BUFFER, MeshColors.size()*sizeof(GLfloat),
+                & MeshColors.front(), GL_STATIC_DRAW);
 }
 
 CMesh * const CMeshLoader::loadASCIIMesh(std::string const & fileName)
