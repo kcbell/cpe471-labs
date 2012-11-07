@@ -69,7 +69,7 @@ static float  g_width, g_height;
 float g_angle = 0;
 float g_trans = -5.5;
 
-static const float g_groundY = -.51;      // y coordinate of the ground
+static const float g_groundY = -1.1;      // y coordinate of the ground
 static const float g_groundSize = 10.0;   // half the ground length
 
 /* projection matrix */
@@ -317,41 +317,62 @@ void Draw (void)
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   if (cube == 0) {
-    //Start our shader
-    glUseProgram(ShadeProg);
+      //Start our shader
+      glUseProgram(ShadeProg);
 
-    //Set up matrix transforms
-    SetProjectionMatrix();
-    SetView();
-    SetModelI();
+      //Set up matrix transforms
+      SetProjectionMatrix();
+      SetView();
+      SetModelI();
 
-    //set up the texture unit
-    glEnable(GL_TEXTURE_2D);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+      glEnable(GL_TEXTURE_2D);
+      
+      // Draw Cube
+      
+      //set up the texture unit
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, 0);
+      safe_glUniform1i(h_uTexUnit, 0);
 
-    safe_glUniform1i(h_uTexUnit, 0);
-    
-    safe_glEnableVertexAttribArray(h_aPosition);
-    glBindBuffer(GL_ARRAY_BUFFER, CubeBuffObj);
-    safe_glVertexAttribPointer(h_aPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+      safe_glEnableVertexAttribArray(h_aPosition);
+      glBindBuffer(GL_ARRAY_BUFFER, CubeBuffObj);
+      safe_glVertexAttribPointer(h_aPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-    safe_glEnableVertexAttribArray(h_aTexCoord);
-    glBindBuffer(GL_ARRAY_BUFFER, TexBuffObj);
-    safe_glVertexAttribPointer(h_aTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0); 
-    
-    // bind ibo
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, CIndxBuffObj);
-    glDrawElements(GL_TRIANGLES, g_CiboLen, GL_UNSIGNED_SHORT, 0);
+      safe_glEnableVertexAttribArray(h_aTexCoord);
+      glBindBuffer(GL_ARRAY_BUFFER, TexBuffObj);
+      safe_glVertexAttribPointer(h_aTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-    safe_glDisableVertexAttribArray(h_aPosition);
-    safe_glDisableVertexAttribArray(h_aTexCoord);
+      // bind ibo
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, CIndxBuffObj);
+      glDrawElements(GL_TRIANGLES, g_CiboLen, GL_UNSIGNED_SHORT, 0);
 
-    //Disable the shader
-    glUseProgram(0);
-    glDisable(GL_TEXTURE_2D);
-  } 
-    glutSwapBuffers();
+      // Draw Ground
+
+      //set up the texture unit
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, 1);
+      safe_glUniform1i(h_uTexUnit, 1);
+      
+      safe_glEnableVertexAttribArray(h_aPosition);
+      glBindBuffer(GL_ARRAY_BUFFER, GrndBuffObj);
+      safe_glVertexAttribPointer(h_aPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+      safe_glEnableVertexAttribArray(h_aTexCoord);
+      glBindBuffer(GL_ARRAY_BUFFER, TexBuffObj);
+      safe_glVertexAttribPointer(h_aTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+      // bind ibo
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GIndxBuffObj);
+      glDrawElements(GL_TRIANGLES, g_GiboLen, GL_UNSIGNED_SHORT, 0);
+
+      safe_glDisableVertexAttribArray(h_aPosition);
+      safe_glDisableVertexAttribArray(h_aTexCoord);
+
+      //Disable the shader
+      glUseProgram(0);
+      glDisable(GL_TEXTURE_2D);
+   } 
+   glutSwapBuffers();
 
 }
 
@@ -431,7 +452,7 @@ int main(int argc, char** argv) {
   Initialize();
   //load in the other image textures
   LoadTexture((char *)"earth1.bmp", 0);
-  LoadTexture((char *)"cloud5.bmp", 1);
+  LoadTexture((char *)"crate.bmp", 1);
   //make the checker board image
   makeCheckerBoard(64, 64);
 
