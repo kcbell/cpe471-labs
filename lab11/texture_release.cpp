@@ -66,7 +66,7 @@ GLint h_uProjMatrix2;
 GLuint CubeBuffObj, CIndxBuffObj, TexBuffObj, GrndBuffObj, GIndxBuffObj;
 int g_CiboLen, g_GiboLen;
 static float  g_width, g_height;
-float look_alpha = 0, look_beta = 3.93;
+float look_alpha = 0, look_beta = 1.57;
 glm::vec3 camera_pos(0.0);
 float mouseSensitivity = 5;
 float walkSpeed = 0.1;
@@ -275,7 +275,6 @@ void Initialize ()                  // Any GL Init Code
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
 }
 
 /* Main display function */
@@ -390,6 +389,8 @@ void mouseMove(int x, int y)
       drag_begin_x = x;
       drag_begin_y = y;
       glutPostRedisplay();
+
+      //printf("%f\n", look_beta);
    }      
 }
 
