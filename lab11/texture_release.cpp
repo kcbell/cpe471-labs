@@ -66,8 +66,10 @@ GLint h_uProjMatrix2;
 GLuint CubeBuffObj, CIndxBuffObj, TexBuffObj, GrndBuffObj, GIndxBuffObj;
 int g_CiboLen, g_GiboLen;
 static float  g_width, g_height;
-float g_angle = 0;
-float g_trans = -5.5;
+float look_alpha = 0, look_beta = 0;
+glm::vec3 camera_pos(0.0);
+float mouseSensitivity = 5;
+float walkSpeed = 0.1;
 
 static const float g_groundY = -1.1;      // y coordinate of the ground
 static const float g_groundSize = 10.0;   // half the ground length
@@ -79,12 +81,21 @@ void SetProjectionMatrix() {
   safe_glUniformMatrix4fv(h_uProjMatrix2, glm::value_ptr(Projection));
 }
 
+glm::vec3 getLookPoint()
+{
+   return glm::vec3(cos(look_alpha)*cos(look_beta),
+                  sin(look_alpha),
+                  cos(look_alpha)*cos(.707-look_beta));
+}
+
 /* camera controls - do not change */
 void SetView() {
-  glm::mat4 Trans = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0, g_trans));
-  glm::mat4 RotateX = glm::rotate( Trans, g_angle, glm::vec3(0.0f, 1, 0));
-  safe_glUniformMatrix4fv(h_uViewMatrix, glm::value_ptr(RotateX));
-  safe_glUniformMatrix4fv(h_uViewMatrix2, glm::value_ptr(RotateX));
+   glm::mat4 RotateX = glm::lookAt(camera_pos,
+                                   camera_pos+getLookPoint(),
+                                   vec3(0.0, 1.0, 0.0));
+   //glm::mat4 RotateX = glm::rotate( Trans, g_angle, glm::vec3(0.0f, 1, 0));
+   safe_glUniformMatrix4fv(h_uViewMatrix, glm::value_ptr(RotateX));
+   safe_glUniformMatrix4fv(h_uViewMatrix2, glm::value_ptr(RotateX));
 }
 
 /* set the model transform to the identity */
@@ -185,50 +196,6 @@ static void initCube() {
     glBufferData(GL_ARRAY_BUFFER, sizeof(CubeTex), CubeTex, GL_STATIC_DRAW);
 
 }
-/*
-static void initCube() {
-
-  float CubePos[] = {
-    -0.5, -0.5, -0.5, //back face 5 verts :0 
-    -0.5, 0.5, -0.5,
-    0.5, 0.5, -0.5,
-    0.5, -0.5, -0.5,
-    0.0, 0.85, -0.5,
-    -0.5, -0.5, 0.5, //front face 5 verts :5
-    -0.5, 0.5, 0.5,
-    0.5, 0.5, 0.5,
-    0.5, -0.5, 0.5,
-    0.0, 0.85, 0.5,
-    -0.5, -0.5, 0.5, //left face 4 verts :10
-    -0.5, -0.5, -.5,
-    -0.5, 0.5, -0.5,
-    -0.5, 0.5, 0.5,
-    0.5, -0.5, 0.5, //right face 4 verts :14
-    0.5, -0.5, -.5,
-    0.5, 0.5, -0.5,
-    0.5, 0.5, 0.5,
-    0.0, 0.85, -0.5, //left roof : 18 
-    0.0, 0.85, 0.5,
-    -0.5, 0.5, 0.5,
-    -0.5, 0.5, -0.5,
-    0.0, 0.85, -0.5, //right roof : 22 
-    0.0, 0.85, 0.5,
-    0.5, 0.5, 0.5,
-    0.5, 0.5, -0.5
-  };
-unsigned short idx[] = {0, 1, 2,  2, 3, 0,  1, 4, 2,  5, 6, 7,  7, 8, 5,  6, 9, 7,  10, 11, 12,  12, 13, 10,  14, 15, 16,  16, 17, 14};
-
-    g_CiboLen = 30;
-    glGenBuffers(1, &CubeBuffObj);
-    glBindBuffer(GL_ARRAY_BUFFER, CubeBuffObj);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(CubePos), CubePos, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &CIndxBuffObj);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, CIndxBuffObj);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(idx), idx, GL_STATIC_DRAW);
-
-}
-*/
 
 void InitGeom() {
   initCube();
@@ -376,30 +343,86 @@ void Draw (void)
 
 }
 
-void keyboard(unsigned char key, int x, int y ){
-  switch( key ) {
-    /* WASD keyes effect view/camera transform */
-    case 'w':
-      g_trans += 0.1;
-      break;
-    case 's':
-      g_trans -= 0.1;
-      break;
-    case 'a':
-      g_angle += 1;
-      break;
-    case 'd':
-      g_angle -= 1;
-      break;
-  case 'c':
-    cube++;
-    cube= cube%2;
-    break;
- case 'q': case 'Q' :
-      exit( EXIT_SUCCESS );
-      break;
-  }
-  glutPostRedisplay();
+bool mouse_left_down = false;
+int drag_begin_x, drag_begin_y;
+
+void mouse(int button, int state, int x, int y)
+{
+   if (button == GLUT_LEFT_BUTTON)
+   {
+      if (state == GLUT_DOWN)
+      {
+         mouse_left_down = true;
+         drag_begin_x = x;
+         drag_begin_y = y;
+      }
+      else if (state == GLUT_UP)
+      {
+         mouse_left_down = false;
+      }
+   }
+}
+
+vec2 screenToFractionalCoords(int x, int y)
+{
+   vec2 result(
+      2.0 * x/(float)glutGet(GLUT_WINDOW_WIDTH)  - 1,
+      -2.0 * y/(float)glutGet(GLUT_WINDOW_HEIGHT) + 1);
+   return result;
+}
+
+void mouseMove(int x, int y)
+{
+   vec2 begin, end;
+   float xChange, yChange;
+
+
+   if (mouse_left_down)
+   {
+      begin = screenToFractionalCoords(drag_begin_x, drag_begin_y);
+      end   = screenToFractionalCoords(x, y);
+      xChange = end.x - begin.x;
+      yChange = end.y - begin.y;
+      
+      look_alpha += mouseSensitivity * yChange;
+      look_beta  += mouseSensitivity * xChange;
+      
+      drag_begin_x = x;
+      drag_begin_y = y;
+      glutPostRedisplay();
+   }      
+}
+
+void keyboard(unsigned char key, int x, int y )
+{
+   vec3 gaze(getLookPoint());
+   vec3 w = normalize(gaze);
+   vec3 u = normalize(cross(vec3(0,1,0), w));
+   vec3 v = cross(w, u);
+
+   switch( key ) {
+      /* WASD keyes effect view/camera transform */
+      case 'w':
+         camera_pos += vec3(w.x,0,w.z) * walkSpeed;
+         break;
+      case 's':
+         camera_pos -= vec3(w.x,0,w.z) * walkSpeed;
+         break;
+      case 'a':
+         camera_pos += vec3(u.x,0,u.z) * walkSpeed;
+         break;
+      case 'd':
+         camera_pos -= vec3(u.x,0,u.z) * walkSpeed;
+         break;
+      case 'c':
+         cube++;
+         cube= cube%2;
+         break;
+      case 'q': case 'Q' :
+         exit( EXIT_SUCCESS );
+         break;
+   }
+   glutPostRedisplay();
 }
 
 //code to create a checker board texture...
@@ -434,38 +457,40 @@ void ReshapeGL (int width, int height)
 }
 
 int main(int argc, char** argv) {
-  
-  //initialize the window
-  glutInit(&argc, argv);
-  glutInitWindowPosition( 20, 20 );
-  glutInitWindowSize(400, 400);
-  glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-  glutCreateWindow("My First texture maps");
-  
-  //set up the opengl call backs
-  glutDisplayFunc(Draw);
-  glutReshapeFunc(ReshapeGL);
-  glutKeyboardFunc(keyboard);
-  
-  cube = 0;
 
-  Initialize();
-  //load in the other image textures
-  LoadTexture((char *)"earth1.bmp", 0);
-  LoadTexture((char *)"crate.bmp", 1);
-  //make the checker board image
-  makeCheckerBoard(64, 64);
+   //initialize the window
+   glutInit(&argc, argv);
+   glutInitWindowPosition( 20, 20 );
+   glutInitWindowSize(400, 400);
+   glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+   glutCreateWindow("My First texture maps");
+   //set up the opengl call backs
+   glutDisplayFunc(Draw);
+   glutReshapeFunc(ReshapeGL);
+   
+   glutKeyboardFunc(keyboard);
+   glutMouseFunc(mouse);
+   glutMotionFunc(mouseMove);
 
-  //test the openGL version
-  getGLversion();
-  //install the shader
-  if (!InstallShader(textFileRead((char *)"tex_vert.glsl"), textFileRead((char *)"tex_frag.glsl"))) {
-        printf("Error installing shader!\n");
-        return 0;
-  }
-  InitGeom();
- 
-  glutMainLoop();
+   cube = 0;
+
+   Initialize();
+   //load in the other image textures
+   LoadTexture((char *)"earth1.bmp", 0);
+   LoadTexture((char *)"crate.bmp", 1);
+   //make the checker board image
+   makeCheckerBoard(64, 64);
+
+   //test the openGL version
+   getGLversion();
+   //install the shader
+   if (!InstallShader(textFileRead((char *)"tex_vert.glsl"), textFileRead((char *)"tex_frag.glsl"))) {
+         printf("Error installing shader!\n");
+         return 0;
+   }
+   InitGeom();
+
+   glutMainLoop();
   
 }
 
