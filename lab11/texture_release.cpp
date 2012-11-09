@@ -66,7 +66,7 @@ GLint h_uProjMatrix2;
 GLuint CubeBuffObj, CIndxBuffObj, TexBuffObj, GrndBuffObj, GIndxBuffObj;
 int g_CiboLen, g_GiboLen;
 static float  g_width, g_height;
-float look_alpha = 0, look_beta = 0;
+float look_alpha = 0, look_beta = 3.93;
 glm::vec3 camera_pos(0.0);
 float mouseSensitivity = 5;
 float walkSpeed = 0.1;
