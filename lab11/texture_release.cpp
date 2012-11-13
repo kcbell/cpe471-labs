@@ -85,7 +85,7 @@ glm::vec3 getLookPoint()
 {
    return glm::vec3(cos(look_alpha)*cos(look_beta),
                   sin(look_alpha),
-                  cos(look_alpha)*cos(.707-look_beta));
+                  cos(look_alpha)*cos(1.57-look_beta));
 }
 
 /* camera controls - do not change */
@@ -394,7 +394,8 @@ void mouseMove(int x, int y)
       xChange = end.x - begin.x;
       yChange = end.y - begin.y;
       
-      look_alpha += mouseSensitivity * yChange;
+      look_alpha = std::min(0.872f, std::max(-0.872f, look_alpha + mouseSensitivity * yChange));
+      //look_alpha += mouseSensitivity * yChange;
       look_beta  += mouseSensitivity * xChange;
       
       drag_begin_x = x;
