@@ -427,10 +427,6 @@ void keyboard(unsigned char key, int x, int y )
       case 'd':
          camera_pos -= vec3(u.x,0,u.z) * walkSpeed;
          break;
-      case 'c':
-         cube++;
-         cube= cube%2;
-         break;
       case 'q': case 'Q' :
          exit( EXIT_SUCCESS );
          break;
