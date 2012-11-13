@@ -63,7 +63,7 @@ GLint h_uProjMatrix;
 GLint h_uModelMatrix2;
 GLint h_uViewMatrix2;
 GLint h_uProjMatrix2;
-GLuint CubeBuffObj, CIndxBuffObj, TexBuffObj, GrndBuffObj, GIndxBuffObj;
+GLuint CubeBuffObj, CIndxBuffObj, TexBuffObj, GTexBuffObj, GrndBuffObj, GIndxBuffObj;
 int g_CiboLen, g_GiboLen;
 static float  g_width, g_height;
 float look_alpha = 0, look_beta = 1.57;
@@ -72,6 +72,7 @@ float mouseSensitivity = 5;
 float walkSpeed = 0.1;
 
 static const float g_groundY = -1.1;      // y coordinate of the ground
+static const float g_groundY = -1.51;      // y coordinate of the ground
 static const float g_groundSize = 10.0;   // half the ground length
 
 /* projection matrix */
@@ -124,6 +125,13 @@ static void initGround() {
      0, 1, 0
     };
 
+    static GLfloat GrndTex[] = {
+       0, 0,
+       0, 1,
+       1, 1,
+       1, 0,
+     };
+
     unsigned short idx[] = {0, 1, 2, 0, 2, 3};
 
 
@@ -135,6 +143,10 @@ static void initGround() {
     glGenBuffers(1, &GIndxBuffObj);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GIndxBuffObj);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(idx), idx, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &GTexBuffObj);
+    glBindBuffer(GL_ARRAY_BUFFER, GTexBuffObj);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GrndTex), GrndTex, GL_STATIC_DRAW);
 
 }
 
@@ -313,26 +325,26 @@ void Draw (void)
       glDrawElements(GL_TRIANGLES, g_CiboLen, GL_UNSIGNED_SHORT, 0);
 
       // Draw Ground
+    glEnable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 1);
 
-      //set up the texture unit
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, 1);
-      safe_glUniform1i(h_uTexUnit, 1);
-      
-      safe_glEnableVertexAttribArray(h_aPosition);
-      glBindBuffer(GL_ARRAY_BUFFER, GrndBuffObj);
-      safe_glVertexAttribPointer(h_aPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    safe_glUniform1i(h_uTexUnit, 1);
 
-      safe_glEnableVertexAttribArray(h_aTexCoord);
-      glBindBuffer(GL_ARRAY_BUFFER, TexBuffObj);
-      safe_glVertexAttribPointer(h_aTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    safe_glEnableVertexAttribArray(h_aPosition);
+    glBindBuffer(GL_ARRAY_BUFFER, GrndBuffObj);
+    safe_glVertexAttribPointer(h_aPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-      // bind ibo
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GIndxBuffObj);
-      glDrawElements(GL_TRIANGLES, g_GiboLen, GL_UNSIGNED_SHORT, 0);
+    safe_glEnableVertexAttribArray(h_aTexCoord);
+    glBindBuffer(GL_ARRAY_BUFFER, GTexBuffObj);
+    safe_glVertexAttribPointer(h_aTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-      safe_glDisableVertexAttribArray(h_aPosition);
-      safe_glDisableVertexAttribArray(h_aTexCoord);
+    // bind ibo
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GIndxBuffObj);
+    glDrawElements(GL_TRIANGLES, g_GiboLen, GL_UNSIGNED_SHORT, 0);
+
+    safe_glDisableVertexAttribArray(h_aPosition);
+    safe_glDisableVertexAttribArray(h_aTexCoord);
 
       //Disable the shader
       glUseProgram(0);
