@@ -71,7 +71,6 @@ glm::vec3 camera_pos(0.0);
 float mouseSensitivity = 5;
 float walkSpeed = 0.1;
 
-static const float g_groundY = -1.1;      // y coordinate of the ground
 static const float g_groundY = -1.51;      // y coordinate of the ground
 static const float g_groundSize = 10.0;   // half the ground length
 
