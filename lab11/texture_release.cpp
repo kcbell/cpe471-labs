@@ -21,6 +21,8 @@
 #include <assert.h>
 #include <vector>
 
+#define MAX_PITCH 0.88f
+
 using namespace std;
 using namespace glm;
 
@@ -394,7 +396,7 @@ void mouseMove(int x, int y)
       xChange = end.x - begin.x;
       yChange = end.y - begin.y;
       
-      look_alpha = std::min(0.872f, std::max(-0.872f, look_alpha + mouseSensitivity * yChange));
+      look_alpha = std::min(MAX_PITCH, std::max(-MAX_PITCH, look_alpha + mouseSensitivity * yChange));
       //look_alpha += mouseSensitivity * yChange;
       look_beta  += mouseSensitivity * xChange;
       
